@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>预约审批 - 公司车辆管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background-color: #f8f9fa;
+            overflow-x: hidden;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            background-color: #fff;
+            width: 200px;
+            transition: all 0.3s ease;
+        }
+        @media (max-width: 767.98px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: absolute;
+                padding-top: 0;
+                display: none;
+                z-index: 1030;
+                box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
+            }
+            .sidebar.show {
+                display: block;
+            }
+            .main-content {
+                margin-left: 0 !important;
+                padding-top: 60px !important;
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+                width: 100% !important;
+            }
+            .navbar-brand {
+                width: 80%;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .card-body .row {
+                flex-direction: column;
+            }
+            .card-body .col-md-2, 
+            .card-body .col-md-3, 
+            .card-body .col-md-4 {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+        .sidebar-sticky {
+            position: relative;
+            top: 0;
+            height: calc(100vh - 48px);
+            padding-top: .5rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        .navbar {
+            background: linear-gradient(180deg, #1890ff 0%, #0050b3 100%);
+            padding: 0.5rem 1rem;
+        }
+        .navbar-brand {
+            padding-top: .75rem;
+            padding-bottom: .75rem;
+            font-size: 1rem;
+        }
+        .navbar .navbar-toggler {
+            color: white;
+            border-color: rgba(255,255,255,0.5);
+            margin-right: 10px;
+        }
+        .sidebar .nav-link {
+            font-weight: 500;
+            color: #333;
+            padding: .5rem 1rem;
+            margin: .2rem 0;
+        }
+        .sidebar .nav-link:hover {
+            background-color: #f0f0f0;
+        }
+        .sidebar .nav-link.active {
+            color: #1890ff;
+            background-color: #e6f7ff;
+            border-right: 3px solid #1890ff;
+        }
+        .sidebar .nav-link .bi {
+            margin-right: 4px;
+            color: #727272;
+        }
+        .sidebar .nav-link.active .bi {
+            color: #1890ff;
+        }
+        .main-content {
+            margin-left: 200px;
+            padding-top: 80px;
+            padding-right: 15px;
+            padding-left: 15px;
+            transition: margin-left 0.3s ease;
+            width: calc(100% - 200px);
+        }
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            border: none;
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid rgba(0,0,0,.125);
+            font-weight: 500;
+        }
+        .sidebar-heading {
+            position: relative;
+            padding: 8px 16px;
+            margin: 0.5rem 0;
+            font-weight: 600;
+            border-left: 4px solid transparent;
+        }
+        .sidebar-heading.user-functions {
+            border-left-color: #1890ff;
+            background-color: #E6F7FF;
+            color: #0050b3;
+        }
+        .sidebar-heading.admin-functions {
+            border-left-color: #52c41a;
+            background-color: #F6FFED;
+            color: #237804;
+        }
+        .sidebar-heading.system-functions {
+            border-left-color: #fa8c16;
+            background-color: #FFF7E6;
+            color: #ad4e00;
+        }
+        .function-section {
+            border-left: 5px solid #52c41a;
+            padding-left: 15px;
+            margin-bottom: 20px;
+            background-color: #f6ffed;
+            padding: 10px 15px;
+            border-radius: 0 5px 5px 0;
+        }
+        .reservation-pending {
+            background-color: #fff7e6;
+        }
+        .reservation-approved {
+            background-color: #f6ffed;
+        }
+        .reservation-rejected {
+            background-color: #fff1f0;
+        }
+        .priority-urgent {
+            color: #cf1322;
+            font-weight: bold;
+        }
+        .priority-high {
+            color: #fa8c16;
+            font-weight: bold;
+        }
+        .priority-medium {
+            color: #1890ff;
+        }
+        .priority-low {
+            color: #52c41a;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar navbar-dark fixed-top p-0 shadow">
+        <div class="container-fluid">
+            <button class="navbar-toggler d-md-none" type="button" id="sidebarToggle">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="{% url 'home' %}">
+                🚗 公司车辆管理系统
+            </a>
+            <div class="d-flex align-items-center">
+                <span class="text-white me-3 d-none d-sm-inline">{{ user.username }}</span>
+                <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 侧边导航栏 -->
+    <div class="container-fluid">
+        <div class="row">
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar">
+                <div class="sidebar-sticky pt-3">
+                    <div class="sidebar-heading user-functions">
+                        <i class="bi bi-person-circle"></i> 个人功能
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'home' %}">
+                                <i class="bi bi-speedometer2"></i> 仪表盘
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'vehicle_list' %}">
+                                <i class="bi bi-car-front"></i> 车辆列表
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'reservation_list' %}">
+                                <i class="bi bi-calendar-check"></i> 我的预约
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'profile' %}">
+                                <i class="bi bi-person"></i> 个人资料
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    {% if is_admin or is_staff %}
+                    <div class="sidebar-heading admin-functions">
+                        <i class="bi bi-shield-lock"></i> 管理功能
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'user_management' %}">
+                                <i class="bi bi-person-lines-fill"></i> 用户管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{% url 'reservation_approval' %}">
+                                <i class="bi bi-list-check"></i> 预约审批
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'maintenance_list' %}">
+                                <i class="bi bi-tools"></i> 维护记录
+                            </a>
+                        </li>
+                    </ul>
+                    {% endif %}
+                    
+                    {% if is_admin %}
+                    <div class="sidebar-heading system-functions">
+                        <i class="bi bi-gear-fill"></i> 系统功能
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'admin_iframe' %}">
+                                <i class="bi bi-gear"></i> 系统管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'statistics' %}">
+                                <i class="bi bi-graph-up"></i> 数据统计
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'audit_logs' %}">
+                                <i class="bi bi-journal-text"></i> 操作日志
+                            </a>
+                        </li>
+                    </ul>
+                    {% endif %}
+                </div>
+            </nav>
+            
+            <!-- 主要内容区域 -->
+            <main class="main-content">
+                <div class="container-fluid">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <div class="function-section">
+                        <h1 class="h2"><i class="bi bi-list-check"></i> 预约审批</h1>
+                        <p class="lead">管理和审批用户的车辆使用申请</p>
+                    </div>
+                    
+                    <!-- 待审批预约 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="bi bi-hourglass-split"></i> 待审批预约
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>申请人</th>
+                                            <th>车辆</th>
+                                            <th>用途</th>
+                                            <th>时间段</th>
+                                            <th>优先级</th>
+                                            <th>申请时间</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for reservation in pending_reservations %}
+                                        <tr class="reservation-pending">
+                                            <td>{{ reservation.id }}</td>
+                                            <td>{{ reservation.user.username }}</td>
+                                            <td>{{ reservation.vehicle.license_plate }}</td>
+                                            <td>{{ reservation.purpose }}</td>
+                                            <td>{{ reservation.start_time|date:"m-d H:i" }} 至 {{ reservation.end_time|date:"m-d H:i" }}</td>
+                                            <td>
+                                                <span class="priority-{{ reservation.priority }}">
+                                                    {% if reservation.priority == 'urgent' %}紧急
+                                                    {% elif reservation.priority == 'high' %}高
+                                                    {% elif reservation.priority == 'medium' %}中
+                                                    {% else %}低{% endif %}
+                                                </span>
+                                            </td>
+                                            <td>{{ reservation.created_at|date:"Y-m-d H:i" }}</td>
+                                            <td>
+                                                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#viewModal{{ reservation.id }}">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                                <a href="{% url 'approve_reservation' reservation.id %}?action=approve" class="btn btn-success btn-sm">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </a>
+                                                <a href="{% url 'approve_reservation' reservation.id %}?action=reject" class="btn btn-danger btn-sm">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="8" class="text-center">暂无待审批预约</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 最近审批历史 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="bi bi-clock-history"></i> 最近审批历史
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>申请人</th>
+                                            <th>车辆</th>
+                                            <th>状态</th>
+                                            <th>审批人</th>
+                                            <th>审批时间</th>
+                                            <th>详情</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for reservation in recent_reservations %}
+                                        <tr class="reservation-{{ reservation.status }}">
+                                            <td>{{ reservation.id }}</td>
+                                            <td>{{ reservation.user.username }}</td>
+                                            <td>{{ reservation.vehicle.license_plate }}</td>
+                                            <td>
+                                                {% if reservation.status == 'approved' %}
+                                                <span class="badge bg-success">已批准</span>
+                                                {% elif reservation.status == 'rejected' %}
+                                                <span class="badge bg-danger">已拒绝</span>
+                                                {% elif reservation.status == 'completed' %}
+                                                <span class="badge bg-info">已完成</span>
+                                                {% elif reservation.status == 'cancelled' %}
+                                                <span class="badge bg-secondary">已取消</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ reservation.approved_by.username|default:"-" }}</td>
+                                            <td>{{ reservation.approved_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                                            <td>
+                                                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#viewModal{{ reservation.id }}">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="7" class="text-center">暂无审批历史</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 预约详情模态框 -->
+                    {% for reservation in all_reservations %}
+                    <div class="modal fade" id="viewModal{{ reservation.id }}" tabindex="-1" aria-labelledby="viewModalLabel{{ reservation.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="viewModalLabel{{ reservation.id }}">预约详情 #{{ reservation.id }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h5>基本信息</h5>
+                                            <table class="table table-bordered">
+                                                <tr>
+                                                    <th width="30%">申请人</th>
+                                                    <td>{{ reservation.user.username }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>部门</th>
+                                                    <td>{{ reservation.user.department|default:"-" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>车辆</th>
+                                                    <td>{{ reservation.vehicle.license_plate }} ({{ reservation.vehicle.brand }} {{ reservation.vehicle.model }})</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>用途</th>
+                                                    <td>{{ reservation.purpose }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>描述</th>
+                                                    <td>{{ reservation.description|default:"-" }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h5>行程信息</h5>
+                                            <table class="table table-bordered">
+                                                <tr>
+                                                    <th width="30%">开始时间</th>
+                                                    <td>{{ reservation.start_time|date:"Y-m-d H:i" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>结束时间</th>
+                                                    <td>{{ reservation.end_time|date:"Y-m-d H:i" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>出发地</th>
+                                                    <td>{{ reservation.start_location }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>目的地</th>
+                                                    <td>{{ reservation.destination }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>乘客数</th>
+                                                    <td>{{ reservation.passengers }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mt-3">
+                                        <div class="col-md-12">
+                                            <h5>审批信息</h5>
+                                            <table class="table table-bordered">
+                                                <tr>
+                                                    <th width="15%">状态</th>
+                                                    <td width="35%">
+                                                        {% if reservation.status == 'pending' %}
+                                                        <span class="badge bg-warning text-dark">待审批</span>
+                                                        {% elif reservation.status == 'approved' %}
+                                                        <span class="badge bg-success">已批准</span>
+                                                        {% elif reservation.status == 'rejected' %}
+                                                        <span class="badge bg-danger">已拒绝</span>
+                                                        {% elif reservation.status == 'completed' %}
+                                                        <span class="badge bg-info">已完成</span>
+                                                        {% elif reservation.status == 'cancelled' %}
+                                                        <span class="badge bg-secondary">已取消</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <th width="15%">优先级</th>
+                                                    <td width="35%">
+                                                        <span class="priority-{{ reservation.priority }}">
+                                                            {% if reservation.priority == 'urgent' %}紧急
+                                                            {% elif reservation.priority == 'high' %}高
+                                                            {% elif reservation.priority == 'medium' %}中
+                                                            {% else %}低{% endif %}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th>申请时间</th>
+                                                    <td>{{ reservation.created_at|date:"Y-m-d H:i" }}</td>
+                                                    <th>审批人</th>
+                                                    <td>{{ reservation.approved_by.username|default:"-" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>审批时间</th>
+                                                    <td>{{ reservation.approved_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                                                    <th>备注</th>
+                                                    <td>{{ reservation.notes|default:"-" }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    {% if reservation.status == 'pending' %}
+                                    <a href="{% url 'approve_reservation' reservation.id %}?action=approve" class="btn btn-success">批准</a>
+                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ reservation.id }}">
+                                        拒绝
+                                    </button>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if reservation.status == 'pending' %}
+                    <!-- 拒绝理由模态框 -->
+                    <div class="modal fade" id="rejectModal{{ reservation.id }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ reservation.id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="rejectModalLabel{{ reservation.id }}">拒绝预约 #{{ reservation.id }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <form action="{% url 'approve_reservation' reservation.id %}?action=reject" method="post">
+                                    {% csrf_token %}
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label for="reason{{ reservation.id }}" class="form-label">拒绝理由</label>
+                                            <textarea class="form-control" id="reason{{ reservation.id }}" name="reason" rows="3" required></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                        <button type="submit" class="btn btn-danger">确认拒绝</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                    
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 侧边栏切换脚本
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarMenu = document.getElementById('sidebarMenu');
+            
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    if (window.innerWidth < 768) {
+                        sidebarMenu.classList.toggle('show');
+                    }
+                });
+            }
+            
+            // 窗口大小变化时自动处理侧边栏
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 768) {
+                    sidebarMenu.classList.remove('show');
+                }
+            });
+            
+            // 点击导航链接时自动隐藏侧边栏
+            const navLinks = document.querySelectorAll('.sidebar .nav-link');
+            navLinks.forEach(function(link) {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth < 768) {
+                        sidebarMenu.classList.remove('show');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

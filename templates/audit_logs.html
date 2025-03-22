@@ -1,0 +1,367 @@
+{% extends 'base.html' %}
+
+{% block title %}审计日志 - 公司车辆管理系统{% endblock %}
+
+{% block extra_css %}
+<style>
+.log-table {
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.log-table th {
+    background-color: #f0f0f0;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.log-success {
+    background-color: rgba(82, 196, 26, 0.1);
+}
+
+.log-info {
+    background-color: rgba(24, 144, 255, 0.1);
+}
+
+.log-warning {
+    background-color: rgba(250, 173, 20, 0.1);
+}
+
+.log-error {
+    background-color: rgba(245, 34, 45, 0.1);
+}
+
+.badge-admin {
+    background-color: #ff4d4f;
+    color: white;
+}
+
+.badge-staff {
+    background-color: #13c2c2;
+    color: white;
+}
+
+.badge-driver {
+    background-color: #faad14;
+    color: white;
+}
+
+.badge-user {
+    background-color: #1890ff;
+    color: white;
+}
+
+.stats-card {
+    padding: 20px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.stats-card .icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.stats-card .value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.stats-card .label {
+    font-size: 1rem;
+    color: #666;
+}
+
+.stats-card.total {
+    border-top: 3px solid #1890ff;
+}
+
+.stats-card.today {
+    border-top: 3px solid #52c41a;
+}
+
+.stats-card.warning {
+    border-top: 3px solid #faad14;
+}
+
+.stats-card.error {
+    border-top: 3px solid #f5222d;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+    <h1 class="h2"><i class="bi bi-journal-text"></i> 审计日志</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="exportBtn">
+                <i class="bi bi-file-earmark-arrow-down"></i> 导出
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="printBtn">
+                <i class="bi bi-printer"></i> 打印
+            </button>
+        </div>
+        <div class="input-group date" id="datepicker">
+            <input type="text" class="form-control form-control-sm" placeholder="选择日期">
+            <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+        </div>
+    </div>
+</div>
+
+<!-- 日志概览信息 -->
+<section>
+    <h2 class="section-title">日志概览信息</h2>
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-card total">
+                <div class="icon text-primary">
+                    <i class="bi bi-journals"></i>
+                </div>
+                <div class="value">{{ total_logs }}</div>
+                <div class="label">总日志数</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card today">
+                <div class="icon text-success">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="value">{{ today_logs }}</div>
+                <div class="label">今日操作</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card warning">
+                <div class="icon text-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="value">{{ warning_logs }}</div>
+                <div class="label">警告记录</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card error">
+                <div class="icon text-danger">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+                <div class="value">{{ error_logs }}</div>
+                <div class="label">错误记录</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 系统操作日志 -->
+<section>
+    <h2 class="section-title">系统操作日志</h2>
+    <div class="card">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="searchInput" placeholder="搜索用户/操作/IP地址...">
+                        <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select" id="logLevelFilter">
+                        <option value="">所有类型</option>
+                        <option value="success">成功</option>
+                        <option value="info">信息</option>
+                        <option value="warning">警告</option>
+                        <option value="error">错误</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover log-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>用户</th>
+                            <th>操作</th>
+                            <th>模块</th>
+                            <th>内容</th>
+                            <th>IP地址</th>
+                            <th>等级</th>
+                            <th>时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr class="log-{{ log.level }}">
+                            <td>{{ log.id }}</td>
+                            <td>
+                                {% if log.user.is_superuser %}
+                                <span class="badge badge-admin">管理员</span>
+                                {% elif log.user.role == 'staff' %}
+                                <span class="badge badge-staff">员工</span>
+                                {% elif log.user.role == 'driver' %}
+                                <span class="badge badge-driver">司机</span>
+                                {% else %}
+                                <span class="badge badge-user">用户</span>
+                                {% endif %}
+                                {{ log.user.username }}
+                            </td>
+                            <td>{{ log.action }}</td>
+                            <td>{{ log.module }}</td>
+                            <td>{{ log.content }}</td>
+                            <td>{{ log.ip_address }}</td>
+                            <td>
+                                {% if log.level == 'success' %}
+                                <span class="badge bg-success">成功</span>
+                                {% elif log.level == 'info' %}
+                                <span class="badge bg-info">信息</span>
+                                {% elif log.level == 'warning' %}
+                                <span class="badge bg-warning text-dark">警告</span>
+                                {% elif log.level == 'error' %}
+                                <span class="badge bg-danger">错误</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center">暂无操作日志</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 分页 -->
+            {% if logs.has_other_pages %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if logs.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ logs.previous_page_number }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for i in logs.paginator.page_range %}
+                        {% if logs.number == i %}
+                        <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                        {% elif i > logs.number|add:'-3' and i < logs.number|add:'3' %}
+                        <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if logs.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ logs.next_page_number }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ logs.paginator.num_pages }}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 搜索功能
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const logLevelFilter = document.getElementById('logLevelFilter');
+        const logTable = document.querySelector('.log-table');
+        const logRows = logTable.querySelectorAll('tbody tr');
+        
+        function filterLogs() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const levelFilter = logLevelFilter.value;
+            
+            logRows.forEach(row => {
+                let matchesSearch = false;
+                const cells = row.querySelectorAll('td');
+                
+                // 搜索用户、操作、IP地址
+                if (cells[1].textContent.toLowerCase().includes(searchTerm) || 
+                    cells[2].textContent.toLowerCase().includes(searchTerm) || 
+                    cells[5].textContent.toLowerCase().includes(searchTerm)) {
+                    matchesSearch = true;
+                }
+                
+                // 等级过滤
+                let matchesLevel = true;
+                if (levelFilter !== '') {
+                    matchesLevel = row.classList.contains('log-' + levelFilter);
+                }
+                
+                if (matchesSearch && matchesLevel) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        searchBtn.addEventListener('click', filterLogs);
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                filterLogs();
+            }
+        });
+        
+        logLevelFilter.addEventListener('change', filterLogs);
+        
+        // 导出功能
+        document.getElementById('exportBtn').addEventListener('click', function() {
+            alert('导出功能将在未来版本中实现');
+        });
+        
+        // 打印功能
+        document.getElementById('printBtn').addEventListener('click', function() {
+            window.print();
+        });
+    });
+</script>
+{% endblock %} 

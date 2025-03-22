@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公司车辆管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background-color: #f8f9fa;
+        }
+        .header {
+            background: linear-gradient(180deg, #1890ff 0%, #0050b3 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        .card {
+            transition: all 0.3s;
+            margin-bottom: 1.5rem;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        .card-icon {
+            font-size: 3rem;
+            color: #1890ff;
+            margin-bottom: 1rem;
+        }
+        .btn-primary {
+            background: linear-gradient(180deg, #1890ff 0%, #096dd9 100%);
+            border: none;
+        }
+        .footer {
+            margin-top: 2rem;
+            padding: 1.5rem 0;
+            background-color: #f1f1f1;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- 头部 -->
+    <header class="header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="display-4">公司车辆管理系统</h1>
+                    <p class="lead">高效管理企业车辆资源，提升业务效率</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="{% url 'login' %}" class="btn btn-outline-light me-2">登录系统</a>
+                    <a href="{% url 'register' %}" class="btn btn-light">注册账号</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容 -->
+    <main class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <!-- 功能概览 -->
+        <section class="mb-5">
+            <h2 class="mb-4 text-center">系统功能</h2>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card text-center p-4">
+                        <div class="card-body">
+                            <div class="card-icon">
+                                <i class="bi bi-car-front"></i>🚗
+                            </div>
+                            <h3 class="card-title">车辆管理</h3>
+                            <p class="card-text">全面管理企业车辆信息，实时查看状态，记录使用情况。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center p-4">
+                        <div class="card-body">
+                            <div class="card-icon">
+                                <i class="bi bi-calendar-check"></i>📅
+                            </div>
+                            <h3 class="card-title">预约系统</h3>
+                            <p class="card-text">智能预约车辆，自动审批流程，避免资源冲突。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center p-4">
+                        <div class="card-body">
+                            <div class="card-icon">
+                                <i class="bi bi-tools"></i>🔧
+                            </div>
+                            <h3 class="card-title">维护记录</h3>
+                            <p class="card-text">定期维护提醒，完整记录维修保养历史，延长车辆寿命。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center p-4">
+                        <div class="card-body">
+                            <div class="card-icon">
+                                <i class="bi bi-graph-up"></i>📊
+                            </div>
+                            <h3 class="card-title">数据统计</h3>
+                            <p class="card-text">多维度统计分析，支持决策，优化车辆资源配置。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 系统特点 -->
+        <section class="mb-5">
+            <h2 class="mb-4 text-center">系统特点</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h3 class="card-title">安全可靠</h3>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">严格的用户权限控制</li>
+                                <li class="list-group-item">操作日志完整记录</li>
+                                <li class="list-group-item">数据定期备份机制</li>
+                                <li class="list-group-item">敏感操作二次验证</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h3 class="card-title">易于使用</h3>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">直观的界面设计</li>
+                                <li class="list-group-item">响应式布局支持多设备访问</li>
+                                <li class="list-group-item">智能搜索与筛选功能</li>
+                                <li class="list-group-item">丰富的数据导出选项</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 快速开始 -->
+        <section class="text-center mb-5">
+            <h2 class="mb-4">开始使用</h2>
+            <p class="mb-4">立即体验我们的车辆管理系统，提升企业管理效率</p>
+            <a href="{% url 'login' %}" class="btn btn-primary btn-lg">登录系统</a>
+            <a href="{% url 'register' %}" class="btn btn-outline-primary btn-lg ms-2">注册账号</a>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <p class="mb-0">© 2024 公司车辆管理系统 | 技术支持：Python + Django</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

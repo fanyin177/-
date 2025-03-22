@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block title %}车辆使用登记 - {{ vehicle.license_plate }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.registration-card {
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.vehicle-info {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+.vehicle-info h4 {
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #1890ff;
+}
+.vehicle-detail {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    border-bottom: 1px dashed #eee;
+    padding-bottom: 10px;
+}
+.detail-label {
+    font-weight: 600;
+    color: #666;
+}
+.form-label {
+    font-weight: 500;
+}
+.required-field::after {
+    content: "*";
+    color: #ff4d4f;
+    margin-left: 4px;
+}
+.btn-submit {
+    background-color: #1890ff;
+    border-color: #1890ff;
+}
+.btn-submit:hover {
+    background-color: #096dd9;
+    border-color: #096dd9;
+}
+.btn-cancel {
+    color: #1890ff;
+    border-color: #1890ff;
+}
+.btn-cancel:hover {
+    background-color: #e6f7ff;
+    border-color: #1890ff;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center mb-4">
+        <h1 class="h2"><i class="bi bi-car-front"></i> 车辆使用登记</h1>
+        <div>
+            <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> 返回车辆详情
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card registration-card">
+                <div class="card-body">
+                    <!-- 车辆基本信息 -->
+                    <div class="vehicle-info">
+                        <h4>车辆信息</h4>
+                        <div class="vehicle-detail">
+                            <span class="detail-label">车牌号</span>
+                            <span>{{ vehicle.license_plate }}</span>
+                        </div>
+                        <div class="vehicle-detail">
+                            <span class="detail-label">品牌型号</span>
+                            <span>{{ vehicle.brand }} {{ vehicle.model }}</span>
+                        </div>
+                        <div class="vehicle-detail">
+                            <span class="detail-label">车辆类型</span>
+                            <span>{{ vehicle.vehicle_type.name }}</span>
+                        </div>
+                        <div class="vehicle-detail">
+                            <span class="detail-label">座位数</span>
+                            <span>{{ vehicle.seats }}人</span>
+                        </div>
+                        <div class="vehicle-detail">
+                            <span class="detail-label">状态</span>
+                            <span class="badge bg-success">可用</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 使用登记表单 -->
+                    <h4 class="mb-4">使用信息登记</h4>
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- 错误消息显示 -->
+                        {% if messages %}
+                        <div class="alert alert-danger">
+                            {% for message in messages %}
+                                {{ message }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="purpose" class="form-label required-field">使用目的</label>
+                            <textarea class="form-control" id="purpose" name="purpose" rows="3" required>{% if form_data.purpose %}{{ form_data.purpose }}{% endif %}</textarea>
+                            <div class="form-text">简要描述车辆使用目的</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="destination" class="form-label required-field">目的地</label>
+                            <input type="text" class="form-control" id="destination" name="destination" value="{% if form_data.destination %}{{ form_data.destination }}{% endif %}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="planned_return_date" class="form-label required-field">计划归还日期</label>
+                            <input type="date" class="form-control" id="planned_return_date" name="planned_return_date" value="{% if form_data.planned_return_date %}{{ form_data.planned_return_date }}{% endif %}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">备注信息</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="2">{% if form_data.notes %}{{ form_data.notes }}{% endif %}</textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-outline-secondary me-md-2">取消</a>
+                            <button type="submit" class="btn btn-primary">提交使用登记</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateField = document.getElementById('planned_return_date');
+        
+        // 只有在没有值的情况下才设置默认日期
+        if (!dateField.value) {
+            // 设置默认日期为今天
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            let mm = today.getMonth() + 1; // 月份从0开始
+            let dd = today.getDate();
+            
+            if (dd < 10) dd = '0' + dd;
+            if (mm < 10) mm = '0' + mm;
+            
+            const todayStr = yyyy + '-' + mm + '-' + dd;
+            dateField.value = todayStr;
+        }
+        
+        // 添加表单提交验证
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(event) {
+            const purposeField = document.getElementById('purpose');
+            const destinationField = document.getElementById('destination');
+            
+            if (!purposeField.value.trim() || !destinationField.value.trim() || !dateField.value) {
+                event.preventDefault();
+                alert('请填写所有必填字段');
+                return false;
+            }
+            
+            // 验证日期格式
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!dateRegex.test(dateField.value)) {
+                event.preventDefault();
+                alert('日期格式无效，请使用YYYY-MM-DD格式');
+                return false;
+            }
+        });
+    });
+</script>
+{% endblock %} 

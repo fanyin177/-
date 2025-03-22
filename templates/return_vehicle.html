@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}归还车辆 - {{ vehicle.license_plate }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.return-card {
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.return-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eaeaea;
+}
+.vehicle-info {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+.vehicle-info p {
+    margin-bottom: 5px;
+}
+.required-field::after {
+    content: " *";
+    color: red;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card return-card">
+                <div class="card-header return-header">
+                    <h3 class="card-title">归还车辆</h3>
+                </div>
+                <div class="card-body">
+                    <!-- 车辆基本信息 -->
+                    <div class="vehicle-info">
+                        <h5>车辆信息</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>车牌号：</strong>{{ vehicle.license_plate }}</p>
+                                <p><strong>品牌型号：</strong>{{ vehicle.brand }} {{ vehicle.model }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>起始里程：</strong>{{ usage_record.start_mileage }} 公里</p>
+                                <p><strong>使用日期：</strong>{{ usage_record.start_date|date:"Y-m-d" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 归还信息表单 -->
+                    <h4 class="mb-4">归还信息</h4>
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- 错误消息显示 -->
+                        {% if messages %}
+                        <div class="alert alert-danger">
+                            {% for message in messages %}
+                                {{ message }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="end_mileage" class="form-label required-field">结束里程（公里）</label>
+                            <input type="number" class="form-control" id="end_mileage" name="end_mileage" min="{{ usage_record.start_mileage }}" value="{% if form_data.end_mileage %}{{ form_data.end_mileage }}{% endif %}" required>
+                            <div class="form-text">请输入当前车辆里程表读数，必须大于或等于起始里程（{{ usage_record.start_mileage }} 公里）</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">备注信息</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3">{% if form_data.notes %}{{ form_data.notes }}{% endif %}</textarea>
+                            <div class="form-text">如有车辆使用中的问题或状况，请在此说明</div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-outline-secondary me-md-2">取消</a>
+                            <button type="submit" class="btn btn-primary">确认归还</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(event) {
+            const endMileageField = document.getElementById('end_mileage');
+            const startMileage = {{ usage_record.start_mileage }};
+            
+            if (!endMileageField.value) {
+                event.preventDefault();
+                alert('请输入结束里程');
+                return false;
+            }
+            
+            const endMileage = parseInt(endMileageField.value);
+            if (endMileage < startMileage) {
+                event.preventDefault();
+                alert('结束里程不能小于起始里程：' + startMileage + '公里');
+                return false;
+            }
+        });
+    });
+</script>
+{% endblock %} 

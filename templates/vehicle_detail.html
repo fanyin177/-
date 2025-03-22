@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ vehicle.license_plate }} - 车辆详情{% endblock %}
+
+{% block extra_css %}
+<style>
+.vehicle-detail-card {
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    border: none;
+    overflow: hidden;
+}
+.vehicle-header {
+    background-color: #f8f9fa;
+    position: relative;
+}
+.vehicle-image {
+    max-height: 350px;
+    object-fit: cover;
+}
+.vehicle-status {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    border-radius: 50rem;
+}
+.vehicle-title {
+    font-weight: 700;
+}
+.info-section {
+    margin-bottom: 2rem;
+}
+.info-section-title {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #f0f0f0;
+    color: #333;
+}
+.info-label {
+    font-weight: 600;
+    color: #666;
+}
+.info-value {
+    font-weight: 400;
+}
+.status-available {
+    background-color: #d9f7be;
+    color: #389e0d;
+}
+.status-inuse {
+    background-color: #fff3cd;
+    color: #856404;
+}
+.status-maintenance {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+.history-item {
+    padding: 1rem;
+    border-left: 4px solid #1890ff;
+    background-color: #f8f9fa;
+    margin-bottom: 1rem;
+    border-radius: 0 4px 4px 0;
+}
+.history-date {
+    font-weight: 600;
+    color: #1890ff;
+}
+.history-type {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+.history-details {
+    font-size: 0.9rem;
+    color: #666;
+}
+.btn-action {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+.btn-reserve {
+    background-color: #1890ff;
+    border-color: #1890ff;
+}
+.btn-maintain {
+    background-color: #faad14;
+    border-color: #faad14;
+}
+.btn-edit {
+    background-color: #13c2c2;
+    border-color: #13c2c2;
+}
+.btn-delete {
+    background-color: #ff4d4f;
+    border-color: #ff4d4f;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">车辆详情</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'vehicle_list' %}" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i> 返回列表
+        </a>
+        {% if is_admin or is_staff %}
+            <a href="{% url 'admin:vehicle_vehicle_change' vehicle.id %}" class="btn btn-sm btn-primary">
+                <i class="bi bi-pencil"></i> 编辑车辆
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-6">
+                        {% if vehicle.image %}
+                            <img src="{{ vehicle.image.url }}" class="img-fluid vehicle-image mb-4" alt="{{ vehicle.brand }} {{ vehicle.model }}">
+                        {% else %}
+                            <div class="bg-light text-center py-5 mb-4 rounded">
+                                <i class="bi bi-car-front" style="font-size: 8rem; color: #ccc;"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-lg-6">
+                        <h3 class="mb-0">{{ vehicle.license_plate }}</h3>
+                        <p class="text-muted">{{ vehicle.brand }} {{ vehicle.model }}</p>
+                        
+                        {% if vehicle.status == 'available' %}
+                            <div class="status-badge status-available mb-3">
+                                <i class="bi bi-check-circle"></i> 可预约
+                            </div>
+                        {% elif vehicle.status == 'in_use' %}
+                            <div class="status-badge status-inuse mb-3">
+                                <i class="bi bi-exclamation-circle"></i> 使用中
+                            </div>
+                        {% elif vehicle.status == 'maintenance' %}
+                            <div class="status-badge status-maintenance mb-3">
+                                <i class="bi bi-tools"></i> 维护中
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-4">
+                            <!-- 删除预约按钮 -->
+                        </div>
+                        
+                        <h5>基本信息</h5>
+                        <ul class="list-unstyled specs-list">
+                            <li><strong>车辆类型：</strong> {{ vehicle.vehicle_type.name }}</li>
+                            <li><strong>座位数：</strong> {{ vehicle.seats }} 人</li>
+                            <li><strong>颜色：</strong> {{ vehicle.color }}</li>
+                            <li><strong>燃油类型：</strong> {{ vehicle.fuel_type }}</li>
+                            {% if vehicle.fuel_consumption %}
+                            <li><strong>油耗：</strong> {{ vehicle.fuel_consumption }} L/100km</li>
+                            {% endif %}
+                            <li><strong>里程数：</strong> {{ vehicle.mileage }} 公里</li>
+                            <li><strong>购买日期：</strong> {{ vehicle.purchase_date|date:"Y-m-d" }}</li>
+                            {% if vehicle.insurance_expiry %}
+                            <li><strong>保险到期：</strong> {{ vehicle.insurance_expiry|date:"Y-m-d" }}</li>
+                            {% endif %}
+                            {% if vehicle.inspection_expiry %}
+                            <li><strong>年检到期：</strong> {{ vehicle.inspection_expiry|date:"Y-m-d" }}</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h5>车辆描述</h5>
+                        <p>{{ vehicle.description|linebreaks }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- 所有用户可见的操作卡片 -->
+        {% if vehicle.status == 'available' %}
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-car-front"></i> 可用操作
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'register_usage' vehicle.id %}" class="btn btn-success">
+                        <i class="bi bi-person-check"></i> 使用车辆
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="mb-3"></div>
+        {% endif %}
+        
+        <!-- 正在使用中的车辆显示归还按钮 -->
+        {% if vehicle.status == 'in_use' %}
+            {% if vehicle.current_driver == user or is_admin or is_staff %}
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-arrow-return-left"></i> 车辆归还
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'return_vehicle' vehicle.id %}" class="btn btn-warning">
+                            <i class="bi bi-box-arrow-in-left"></i> 归还车辆
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3"></div>
+            {% endif %}
+        {% endif %}
+        
+        <!-- 管理员选项卡片 -->
+        {% if is_admin or is_staff %}
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-gear-fill"></i> 管理选项
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'create_maintenance' %}?vehicle_id={{ vehicle.id }}" class="btn btn-outline-primary">
+                        <i class="bi bi-tools"></i> 添加维护记录
+                    </a>
+                    <a href="{% url 'admin:vehicle_vehicle_change' vehicle.id %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-pencil"></i> 编辑车辆信息
+                    </a>
+                    {% if vehicle.status == 'available' %}
+                        <a href="#" class="btn btn-outline-warning toggle-status-btn" data-status="maintenance">
+                            <i class="bi bi-wrench"></i> 设置为维护中
+                        </a>
+                    {% elif vehicle.status == 'maintenance' %}
+                        <a href="#" class="btn btn-outline-success toggle-status-btn" data-status="available">
+                            <i class="bi bi-check-circle"></i> 设置为可用
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <i class="bi bi-tools"></i> 最近维护记录
+            </div>
+            <div class="card-body">
+                {% if maintenance_records %}
+                    {% for record in maintenance_records %}
+                        <div class="maintenance-history-item">
+                            <h6>{{ record.maintenance_type.name }}</h6>
+                            <p class="text-muted small">
+                                <i class="bi bi-calendar"></i> {{ record.start_date|date:"Y-m-d" }}
+                                {% if record.cost %}
+                                <br><i class="bi bi-currency-yen"></i> {{ record.cost }} 元
+                                {% endif %}
+                            </p>
+                            <p class="small">{{ record.description|truncatewords:20 }}</p>
+                            <span class="badge {% if record.status == 'completed' %}bg-success{% elif record.status == 'in_progress' %}bg-warning{% else %}bg-info{% endif %}">
+                                {{ record.get_status_display }}
+                            </span>
+                        </div>
+                    {% endfor %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'maintenance_list' %}?vehicle_id={{ vehicle.id }}" class="btn btn-sm btn-outline-secondary">
+                            查看全部维护记录
+                        </a>
+                    </div>
+                {% else %}
+                    <p class="text-muted">暂无维护记录</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 车辆状态切换
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleStatusBtns = document.querySelectorAll('.toggle-status-btn');
+        toggleStatusBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const status = this.getAttribute('data-status');
+                if (confirm(`确定要将车辆状态更改为 ${status === 'available' ? '可用' : '维护中'} 吗？`)) {
+                    // 这里可以添加AJAX调用来更新状态
+                    fetch(`/api/vehicles/{{ vehicle.id }}/update-status/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            status: status
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload();
+                        } else {
+                            alert('更新状态失败: ' + data.error);
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %} 

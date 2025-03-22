@@ -1,0 +1,490 @@
+{% extends 'base.html' %}
+
+{% block title %}数据统计 - 公司车辆管理系统{% endblock %}
+
+{% block extra_css %}
+<style>
+.stat-card {
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    color: white;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+.stat-card .stat-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+.stat-card .stat-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.stat-card .stat-label {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+.users-card {
+    background: linear-gradient(45deg, #1976d2, #64b5f6);
+}
+.vehicles-card {
+    background: linear-gradient(45deg, #388e3c, #81c784);
+}
+.reservations-card {
+    background: linear-gradient(45deg, #f57c00, #ffb74d);
+}
+.logs-card {
+    background: linear-gradient(45deg, #0097a7, #4dd0e1);
+}
+.chart-container {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.section-title {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    border-left: 4px solid #1890ff;
+    padding-left: 10px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+    <h1 class="h2"><i class="bi bi-graph-up"></i> 数据统计</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="exportPDF">
+                <i class="bi bi-file-earmark-pdf"></i> 导出PDF
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="printBtn">
+                <i class="bi bi-printer"></i> 打印
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="refreshBtn">
+                <i class="bi bi-arrow-repeat"></i> 刷新
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 系统概览 -->
+<section>
+    <h2 class="section-title system-section">系统概览</h2>
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stat-card users-card">
+                <div class="stat-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-value">{{ total_users }}</div>
+                <div class="stat-label">总用户数</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card vehicles-card">
+                <div class="stat-icon">
+                    <i class="bi bi-truck"></i>
+                </div>
+                <div class="stat-value">{{ total_vehicles }}</div>
+                <div class="stat-label">总车辆数</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card reservations-card">
+                <div class="stat-icon">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stat-value">{{ total_usage_records }}</div>
+                <div class="stat-label">车辆使用次数</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card logs-card">
+                <div class="stat-icon">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+                <div class="stat-value">0</div>
+                <div class="stat-label">总日志数</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 车辆分析 -->
+<section>
+    <h2 class="section-title vehicle-section">车辆分析</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="bi bi-bar-chart-line"></i> 车辆使用频率</h5>
+                <canvas id="vehicleUsageChart"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="bi bi-pie-chart"></i> 车辆里程统计</h5>
+                <canvas id="vehicleMileageChart"></canvas>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 用户活跃度 -->
+<section>
+    <h2 class="section-title user-section">用户活跃度</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="bi bi-people"></i> 用户角色分布</h5>
+                <canvas id="userRolesChart"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="bi bi-activity"></i> 用户活动统计</h5>
+                <canvas id="userActivityChart"></canvas>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 预约统计 -->
+<section>
+    <h2 class="section-title reservation-section">车辆使用统计</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="bi bi-calendar3"></i> 使用状态分布</h5>
+                <canvas id="reservationStatusChart"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="bi bi-clock-history"></i> 每月使用趋势</h5>
+                <canvas id="reservationTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 维护记录 -->
+<section>
+    <h2 class="section-title maintenance-section">维护记录</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="bi bi-tools"></i> 维护类型分布</h5>
+                <canvas id="maintenanceTypeChart"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="bi bi-currency-yen"></i> 维护费用分析</h5>
+                <canvas id="maintenanceCostChart"></canvas>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 示例数据
+    const vehicleUsageData = {
+        labels: ['车辆1', '车辆2', '车辆3', '车辆4', '车辆5'],
+        datasets: [{
+            label: '使用次数',
+            data: [12, 19, 3, 5, 2],
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    };
+    
+    const vehicleMileageData = {
+        labels: ['轿车', 'SUV', '商务车', '货车'],
+        datasets: [{
+            label: '平均里程(km)',
+            data: [5000, 7500, 10000, 15000],
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.5)',
+                'rgba(54, 162, 235, 0.5)',
+                'rgba(255, 206, 86, 0.5)',
+                'rgba(75, 192, 192, 0.5)'
+            ],
+            borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+    
+    const userRolesData = {
+        labels: ['管理员', '员工', '司机', '普通用户'],
+        datasets: [{
+            label: '用户数',
+            data: [{{ admin_users }}, {{ staff_users }}, {{ driver_users }}, {{ regular_users }}],
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.5)',
+                'rgba(54, 162, 235, 0.5)',
+                'rgba(255, 206, 86, 0.5)',
+                'rgba(75, 192, 192, 0.5)'
+            ],
+            borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+    
+    const userActivityData = {
+        labels: [{% for item in daily_stats %}'{{ item.date }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: '新用户',
+            data: [{% for item in daily_stats %}{{ item.new_users }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            tension: 0.3,
+            fill: true
+        }, {
+            label: '使用记录',
+            data: [{% for item in daily_stats %}{{ item.usage_records }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            borderColor: 'rgba(54, 162, 235, 1)',
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            tension: 0.3,
+            fill: true
+        }, {
+            label: '维护记录',
+            data: [{% for item in daily_stats %}{{ item.maintenance }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            borderColor: 'rgba(255, 206, 86, 1)',
+            backgroundColor: 'rgba(255, 206, 86, 0.2)',
+            tension: 0.3,
+            fill: true
+        }]
+    };
+    
+    const reservationStatusData = {
+        labels: ['进行中', '已完成'],
+        datasets: [{
+            label: '使用记录数',
+            data: [{{ active_usage_records }}, {{ completed_usage_records }}],
+            backgroundColor: [
+                'rgba(75, 192, 192, 0.5)',
+                'rgba(54, 162, 235, 0.5)'
+            ],
+            borderColor: [
+                'rgba(75, 192, 192, 1)',
+                'rgba(54, 162, 235, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+    
+    const reservationTrendData = {
+        labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+        datasets: [{
+            label: '使用次数',
+            data: [12, 19, 13, 15, 22, 27],
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.4,
+            fill: true
+        }]
+    };
+    
+    const maintenanceTypeData = {
+        labels: ['定期保养', '故障维修', '年检准备', '事故维修'],
+        datasets: [{
+            label: '次数',
+            data: [15, 8, 5, 2],
+            backgroundColor: [
+                'rgba(54, 162, 235, 0.5)',
+                'rgba(255, 99, 132, 0.5)',
+                'rgba(255, 206, 86, 0.5)',
+                'rgba(75, 192, 192, 0.5)'
+            ],
+            borderColor: [
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 99, 132, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+    
+    const maintenanceCostData = {
+        labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+        datasets: [{
+            label: '维护费用(元)',
+            data: [1200, 1900, 800, 1500, 2000, 1700],
+            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 1
+        }]
+    };
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // 车辆使用频率图表
+        new Chart(document.getElementById('vehicleUsageChart'), {
+            type: 'bar',
+            data: vehicleUsageData,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // 车辆里程统计图表
+        new Chart(document.getElementById('vehicleMileageChart'), {
+            type: 'pie',
+            data: vehicleMileageData,
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // 用户角色分布图表
+        new Chart(document.getElementById('userRolesChart'), {
+            type: 'pie',
+            data: userRolesData,
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // 用户活动统计图表
+        new Chart(document.getElementById('userActivityChart'), {
+            type: 'line',
+            data: userActivityData,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // 预约状态分布图表
+        new Chart(document.getElementById('reservationStatusChart'), {
+            type: 'pie',
+            data: reservationStatusData,
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // 每月预约趋势图表
+        new Chart(document.getElementById('reservationTrendChart'), {
+            type: 'line',
+            data: reservationTrendData,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // 维护类型分布图表
+        new Chart(document.getElementById('maintenanceTypeChart'), {
+            type: 'pie',
+            data: maintenanceTypeData,
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // 维护费用分析图表
+        new Chart(document.getElementById('maintenanceCostChart'), {
+            type: 'bar',
+            data: maintenanceCostData,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // 打印功能
+        document.getElementById('printBtn').addEventListener('click', function() {
+            window.print();
+        });
+        
+        // 刷新功能
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            location.reload();
+        });
+        
+        // 导出PDF功能（这里只是一个演示，实际上需要额外的库支持）
+        document.getElementById('exportPDF').addEventListener('click', function() {
+            alert('PDF导出功能将在未来版本中实现。');
+        });
+    });
+</script>
+{% endblock %} 

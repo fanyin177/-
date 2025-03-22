@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}添加维护记录 - 车辆管理系统{% endblock %}
+
+{% block extra_css %}
+<style>
+.maintenance-form {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+}
+.form-title {
+    margin-bottom: 1.5rem;
+    color: #333;
+    font-weight: 600;
+    border-left: 4px solid #1890ff;
+    padding-left: 10px;
+}
+.form-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px dashed #e8e8e8;
+}
+.section-title {
+    color: #1890ff;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+.required-field::after {
+    content: "*";
+    color: #ff4d4f;
+    margin-left: 4px;
+}
+.btn-submit {
+    background-color: #1890ff;
+    border-color: #1890ff;
+}
+.btn-submit:hover {
+    background-color: #096dd9;
+    border-color: #096dd9;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-tools"></i> 添加维护记录</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'maintenance_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 返回列表
+        </a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-clipboard-plus"></i> 创建新维护记录
+    </div>
+    <div class="card-body">
+        <form method="post" action="{% url 'create_maintenance' %}">
+            {% csrf_token %}
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="vehicle_id" class="form-label required">选择车辆</label>
+                    <select class="form-select" id="vehicle_id" name="vehicle_id" required>
+                        <option value="">-- 请选择车辆 --</option>
+                        {% for vehicle in vehicles %}
+                            <option value="{{ vehicle.id }}" {% if vehicle_id == vehicle.id|stringformat:"i" %}selected{% endif %}>
+                                {{ vehicle.license_plate }} ({{ vehicle.model }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">选择需要维护的车辆</div>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="maintenance_type" class="form-label required">维护类型</label>
+                    <select class="form-select" id="maintenance_type" name="maintenance_type" required>
+                        <option value="">-- 请选择维护类型 --</option>
+                        {% for type in maintenance_types %}
+                            <option value="{{ type.id }}">{{ type.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">选择维护的类型</div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="description" class="form-label required">维护描述</label>
+                <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                <div class="form-text">详细描述维护原因和需要进行的工作</div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="scheduled_date" class="form-label required">计划日期</label>
+                    <input type="date" class="form-control" id="scheduled_date" name="scheduled_date" required>
+                    <div class="form-text">计划进行维护的日期</div>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="estimated_cost" class="form-label">预估费用（元）</label>
+                    <input type="number" class="form-control" id="estimated_cost" name="estimated_cost" min="0" step="0.01">
+                    <div class="form-text">预估的维护费用（可选）</div>
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{% url 'maintenance_list' %}" class="btn btn-outline-secondary me-md-2">
+                    <i class="bi bi-x-circle"></i> 取消
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> 创建维护记录
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 设置今天为默认日期
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('scheduled_date').value = today;
+    });
+</script>
+{% endblock %} 

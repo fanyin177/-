@@ -1,0 +1,458 @@
+{% extends 'base.html' %}
+
+{% block title %}车辆列表 - 公司车辆管理系统{% endblock %}
+
+{% block extra_css %}
+<style>
+.vehicle-card {
+    transition: transform 0.3s;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border: none;
+    overflow: hidden;
+}
+.vehicle-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+.vehicle-card .card-img-top {
+    height: 180px;
+    object-fit: cover;
+}
+.vehicle-card .card-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+.vehicle-status-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 50rem;
+    font-weight: 600;
+}
+.status-available {
+    background-color: #d9f7be;
+    color: #389e0d;
+}
+.status-maintenance {
+    background-color: #fff7e6;
+    color: #d48806;
+}
+.status-reserved {
+    background-color: #e6f7ff;
+    color: #096dd9;
+}
+.vehicle-type-badge {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 50rem;
+    font-weight: 600;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+}
+.filter-card {
+    margin-bottom: 20px;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+.filter-card .card-header {
+    background-color: #f8f9fa;
+    border-bottom: none;
+    font-weight: 600;
+}
+.btn-filter {
+    background-color: #1890ff;
+    border-color: #1890ff;
+}
+.btn-filter:hover {
+    background-color: #096dd9;
+    border-color: #096dd9;
+}
+.quick-actions {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: space-around;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.vehicle-card:hover .quick-actions {
+    opacity: 1;
+}
+.quick-actions a {
+    color: white;
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+}
+.quick-actions a:hover {
+    transform: scale(1.2);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="function-section main">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+        <h1 class="h2"><i class="bi bi-car-front"></i> 车辆列表</h1>
+    </div>
+</div>
+
+<!-- 搜索和筛选 -->
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-search"></i> 搜索和筛选</span>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary me-2" type="button" data-bs-toggle="collapse" data-bs-target="#sortCollapse">
+                    <i class="bi bi-sort-down"></i> 排序
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                    <i class="bi bi-funnel"></i> 筛选
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 排序选项 -->
+    <div class="collapse {% if request.GET.sort_by %}show{% endif %}" id="sortCollapse">
+        <div class="card-body border-bottom">
+            <form method="get" class="row g-3">
+                <!-- 保持当前的筛选条件 -->
+                {% if request.GET.license_plate %}
+                <input type="hidden" name="license_plate" value="{{ request.GET.license_plate }}">
+                {% endif %}
+                {% if request.GET.vehicle_type %}
+                <input type="hidden" name="vehicle_type" value="{{ request.GET.vehicle_type }}">
+                {% endif %}
+                {% if request.GET.status %}
+                <input type="hidden" name="status" value="{{ request.GET.status }}">
+                {% endif %}
+                
+                <div class="col-md-4">
+                    <label for="sort_by" class="form-label">排序字段</label>
+                    <select class="form-select" id="sort_by" name="sort_by">
+                        <option value="license_plate" {% if request.GET.sort_by == 'license_plate' %}selected{% endif %}>车牌号</option>
+                        <option value="brand" {% if request.GET.sort_by == 'brand' %}selected{% endif %}>品牌</option>
+                        <option value="status" {% if request.GET.sort_by == 'status' %}selected{% endif %}>状态</option>
+                        <option value="mileage" {% if request.GET.sort_by == 'mileage' %}selected{% endif %}>里程</option>
+                        <option value="purchase_date" {% if request.GET.sort_by == 'purchase_date' %}selected{% endif %}>购买日期</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="sort_direction" class="form-label">排序方向</label>
+                    <select class="form-select" id="sort_direction" name="sort_direction">
+                        <option value="asc" {% if request.GET.sort_direction == 'asc' %}selected{% endif %}>升序（A-Z，小到大）</option>
+                        <option value="desc" {% if request.GET.sort_direction == 'desc' %}selected{% endif %}>降序（Z-A，大到小）</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-sort-down"></i> 应用排序
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 筛选条件 -->
+    <div class="collapse {% if request.GET.license_plate or request.GET.vehicle_type or request.GET.status %}show{% endif %}" id="filterCollapse">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <!-- 保留排序条件 -->
+                {% if request.GET.sort_by %}
+                <input type="hidden" name="sort_by" value="{{ request.GET.sort_by }}">
+                {% endif %}
+                {% if request.GET.sort_direction %}
+                <input type="hidden" name="sort_direction" value="{{ request.GET.sort_direction }}">
+                {% endif %}
+                
+                <div class="col-md-3">
+                    <label for="license_plate" class="form-label">车牌号</label>
+                    <input type="text" class="form-control" id="license_plate" name="license_plate" 
+                        placeholder="输入车牌号" value="{{ request.GET.license_plate|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="vehicle_type" class="form-label">车辆类型</label>
+                    <select class="form-select" id="vehicle_type" name="vehicle_type">
+                    <option value="">全部类型</option>
+                    {% for type in vehicle_types %}
+                    <option value="{{ type.id }}" {% if request.GET.vehicle_type == type.id|stringformat:"s" %}selected{% endif %}>{{ type.name }}</option>
+                    {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">状态</label>
+                    <select class="form-select" id="status" name="status">
+                    <option value="">全部状态</option>
+                    <option value="available" {% if request.GET.status == 'available' %}selected{% endif %}>可用</option>
+                    <option value="in_use" {% if request.GET.status == 'in_use' %}selected{% endif %}>使用中</option>
+                    <option value="maintenance" {% if request.GET.status == 'maintenance' %}selected{% endif %}>维护中</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="d-flex w-100">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-search"></i> 搜索
+                        </button>
+                        {% if request.GET.license_plate or request.GET.vehicle_type or request.GET.status %}
+                        <a href="?{% if request.GET.sort_by %}sort_by={{ request.GET.sort_by }}&sort_direction={{ request.GET.sort_direction }}{% endif %}" class="btn btn-outline-secondary ms-2">
+                            <i class="bi bi-x-circle"></i> 清除
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+            {% if request.GET.license_plate or request.GET.vehicle_type or request.GET.status %}
+            <div class="mt-3">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 筛选结果：共找到 <strong>{{ vehicles|length }}</strong> 辆车
+                    {% if request.GET.license_plate %}
+                        | 车牌包含：<strong>{{ request.GET.license_plate }}</strong>
+                    {% endif %}
+                    {% if request.GET.vehicle_type %}
+                        | 车辆类型：
+                        {% for type in vehicle_types %}
+                            {% if request.GET.vehicle_type == type.id|stringformat:"s" %}
+                                <strong>{{ type.name }}</strong>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    {% if request.GET.status %}
+                        | 状态：
+                        {% if request.GET.status == 'available' %}
+                            <strong>可用</strong>
+                        {% elif request.GET.status == 'in_use' %}
+                            <strong>使用中</strong>
+                        {% elif request.GET.status == 'maintenance' %}
+                            <strong>维护中</strong>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- 筛选结果统计 -->
+{% if request.GET.license_plate or request.GET.vehicle_type or request.GET.status or request.GET.sort_by %}
+<div class="mb-3">
+    <div class="alert alert-info d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fw-bold">共找到 {{ vehicles|length }} 辆车</span>
+            {% if request.GET.license_plate %}
+            <span class="badge bg-secondary ms-2">车牌号: {{ request.GET.license_plate }}</span>
+            {% endif %}
+            {% if request.GET.vehicle_type %}
+            <span class="badge bg-secondary ms-2">类型: 
+                {% for type in vehicle_types %}
+                    {% if type.id|stringformat:"s" == request.GET.vehicle_type %}
+                        {{ type.name }}
+                    {% endif %}
+                {% endfor %}
+            </span>
+            {% endif %}
+            {% if request.GET.status %}
+            <span class="badge bg-secondary ms-2">状态: 
+                {% if request.GET.status == 'available' %}可用
+                {% elif request.GET.status == 'in_use' %}使用中
+                {% elif request.GET.status == 'maintenance' %}维护中
+                {% endif %}
+            </span>
+            {% endif %}
+            {% if request.GET.sort_by %}
+            <span class="badge bg-secondary ms-2">排序: 
+                {% if request.GET.sort_by == 'license_plate' %}车牌号
+                {% elif request.GET.sort_by == 'brand' %}品牌
+                {% elif request.GET.sort_by == 'status' %}状态
+                {% elif request.GET.sort_by == 'mileage' %}里程
+                {% elif request.GET.sort_by == 'purchase_date' %}购买日期
+                {% endif %}
+                ({% if request.GET.sort_direction == 'asc' %}升序{% else %}降序{% endif %})
+            </span>
+            {% endif %}
+        </div>
+        <a href="{% url 'vehicle_list' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-x-circle"></i> 清除所有条件
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- 车辆列表 -->
+<div class="row">
+    {% for vehicle in vehicles %}
+    <div class="col-md-4 mb-4">
+        <div class="card vehicle-card h-100">
+            <div class="vehicle-status 
+                {% if vehicle.status == 'available' %}status-available
+                {% elif vehicle.status == 'in_use' %}status-inuse
+                {% else %}status-maintenance{% endif %}">
+                {{ vehicle.get_status_display }}
+                {% if request.GET.sort_by == 'status' %}
+                <small><i class="bi {% if request.GET.sort_direction == 'asc' %}bi-sort-alpha-down{% else %}bi-sort-alpha-up{% endif %}"></i></small>
+                {% endif %}
+            </div>
+            {% if vehicle.image %}
+            <img src="{{ vehicle.image.url }}" class="card-img-top" alt="{{ vehicle.license_plate }}" style="height: 180px; object-fit: cover;">
+            {% else %}
+            <div class="card-img-top bg-light d-flex justify-content-center align-items-center" style="height: 180px;">
+                <i class="bi bi-car-front display-1 text-muted"></i>
+            </div>
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ vehicle.license_plate }}
+                {% if request.GET.sort_by == 'license_plate' %}
+                <small><i class="bi {% if request.GET.sort_direction == 'asc' %}bi-sort-alpha-down{% else %}bi-sort-alpha-up{% endif %} text-primary"></i></small>
+                {% endif %}
+                </h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{ vehicle.brand }} {{ vehicle.model }}
+                {% if request.GET.sort_by == 'brand' %}
+                <small><i class="bi {% if request.GET.sort_direction == 'asc' %}bi-sort-alpha-down{% else %}bi-sort-alpha-up{% endif %} text-primary"></i></small>
+                {% endif %}
+                </h6>
+                <p class="card-text">
+                    <small class="text-muted">
+                        <i class="bi bi-tag"></i> {{ vehicle.vehicle_type.name }} |
+                        <i class="bi bi-palette"></i> {{ vehicle.color }} |
+                        <i class="bi bi-people"></i> {{ vehicle.seats }}座
+                    </small>
+                </p>
+                <p class="card-text">
+                    <small class="text-muted">
+                        <i class="bi bi-speedometer2"></i> 行驶里程: {{ vehicle.mileage }}公里
+                        {% if request.GET.sort_by == 'mileage' %}
+                        <i class="bi {% if request.GET.sort_direction == 'asc' %}bi-sort-numeric-down{% else %}bi-sort-numeric-up{% endif %} text-primary"></i>
+                        {% endif %}
+                    </small>
+                </p>
+                {% if vehicle.purchase_date %}
+                <p class="card-text">
+                    <small class="text-muted">
+                        <i class="bi bi-calendar"></i> 购买日期: {{ vehicle.purchase_date|date:"Y-m-d" }}
+                        {% if request.GET.sort_by == 'purchase_date' %}
+                        <i class="bi {% if request.GET.sort_direction == 'asc' %}bi-sort-down{% else %}bi-sort-up{% endif %} text-primary"></i>
+                        {% endif %}
+                    </small>
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent border-top-0">
+                <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-info-circle"></i> 详细信息
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> 暂无车辆数据
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- 分页 -->
+{% if vehicles.paginator.num_pages > 1 %}
+<nav aria-label="分页导航">
+    <ul class="pagination justify-content-center">
+        <!-- 前一页 -->
+        {% if vehicles.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ vehicles.previous_page_number }}{% if request.GET.license_plate %}&license_plate={{ request.GET.license_plate }}{% endif %}{% if request.GET.vehicle_type %}&vehicle_type={{ request.GET.vehicle_type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}{% if request.GET.sort_direction %}&sort_direction={{ request.GET.sort_direction }}{% endif %}" aria-label="上一页">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" href="#" aria-label="上一页">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+        {% endif %}
+        
+        <!-- 页码 -->
+        {% for num in page_range %}
+            {% if num %}
+                {% if vehicles.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }} <span class="sr-only">(当前)</span></span>
+                </li>
+                {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% if request.GET.license_plate %}&license_plate={{ request.GET.license_plate }}{% endif %}{% if request.GET.vehicle_type %}&vehicle_type={{ request.GET.vehicle_type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}{% if request.GET.sort_direction %}&sort_direction={{ request.GET.sort_direction }}{% endif %}">{{ num }}</a>
+                </li>
+                {% endif %}
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>
+            {% endif %}
+        {% endfor %}
+        
+        <!-- 下一页 -->
+        {% if vehicles.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ vehicles.next_page_number }}{% if request.GET.license_plate %}&license_plate={{ request.GET.license_plate }}{% endif %}{% if request.GET.vehicle_type %}&vehicle_type={{ request.GET.vehicle_type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}{% if request.GET.sort_direction %}&sort_direction={{ request.GET.sort_direction }}{% endif %}" aria-label="下一页">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" href="#" aria-label="下一页">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+<p class="text-center text-muted mt-2">
+    显示 {{ vehicles.start_index }} - {{ vehicles.end_index }} 条，共 {{ total_vehicles }} 条记录
+</p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 侧边栏切换脚本
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarMenu = document.getElementById('sidebarMenu');
+        
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function() {
+                if (window.innerWidth < 768) {
+                    sidebarMenu.classList.toggle('show');
+                }
+            });
+        }
+        
+        // 窗口大小变化时自动处理侧边栏
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768) {
+                sidebarMenu.classList.remove('show');
+            }
+        });
+        
+        // 点击导航链接时自动隐藏侧边栏
+        const navLinks = document.querySelectorAll('.sidebar .nav-link');
+        navLinks.forEach(function(link) {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 768) {
+                    sidebarMenu.classList.remove('show');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %} 

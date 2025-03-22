@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}公司车辆管理系统{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background-color: #f8f9fa;
+            overflow-x: hidden;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            background-color: #fff;
+            width: 200px;
+            transition: all 0.3s ease;
+        }
+        @media (max-width: 767.98px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: absolute;
+                padding-top: 0;
+                display: none;
+                z-index: 1030;
+                box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
+            }
+            .sidebar.show {
+                display: block;
+            }
+            .main-content {
+                margin-left: 0 !important;
+                padding-top: 60px !important;
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+                width: 100% !important;
+            }
+            .navbar-brand {
+                width: 80%;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .card-body .row {
+                flex-direction: column;
+            }
+            .card-body .col-md-2, 
+            .card-body .col-md-3, 
+            .card-body .col-md-4 {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+        .sidebar-sticky {
+            position: relative;
+            top: 0;
+            height: calc(100vh - 48px);
+            padding-top: .5rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        .navbar {
+            background: linear-gradient(180deg, #1890ff 0%, #0050b3 100%);
+            padding: 0.5rem 1rem;
+        }
+        .navbar-brand {
+            padding-top: .75rem;
+            padding-bottom: .75rem;
+            font-size: 1rem;
+        }
+        .navbar .navbar-toggler {
+            color: white;
+            border-color: rgba(255,255,255,0.5);
+            margin-right: 10px;
+        }
+        .sidebar .nav-link {
+            font-weight: 500;
+            color: #333;
+            padding: .75rem 1rem;
+            margin: .2rem 0;
+            border-radius: 0 6px 6px 0;
+            transition: all 0.2s ease;
+        }
+        .sidebar .nav-link:hover {
+            background-color: #f0f0f0;
+            transform: translateX(5px);
+        }
+        .sidebar .nav-link.active {
+            color: #1890ff;
+            background-color: #e6f7ff;
+            border-right: 3px solid #1890ff;
+        }
+        .sidebar .nav-link .bi {
+            margin-right: 8px;
+            color: #727272;
+            font-size: 1.1rem;
+        }
+        .sidebar .nav-link.active .bi {
+            color: #1890ff;
+        }
+        .main-content {
+            margin-left: 200px;
+            padding-top: 80px;
+            padding-right: 15px;
+            padding-left: 15px;
+            transition: margin-left 0.3s ease;
+            width: calc(100% - 200px);
+        }
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            border: none;
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid rgba(0,0,0,.125);
+            font-weight: 500;
+        }
+        .sidebar-heading {
+            position: relative;
+            padding: 10px 16px;
+            margin: 0;
+            font-weight: 600;
+            border-left: 4px solid transparent;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .sidebar-heading.user-functions {
+            border-left-color: #1890ff;
+            background-color: #E6F7FF;
+            color: #0050b3;
+        }
+        .sidebar-heading.main-functions {
+            border-left-color: #1890ff;
+            background-color: #E6F7FF;
+            color: #0050b3;
+        }
+        .sidebar-heading.admin-functions {
+            border-left-color: #52c41a;
+            background-color: #f6ffed;
+            color: #389e0d;
+        }
+        .sidebar-heading.system-functions {
+            border-left-color: #52c41a;
+            background-color: #f6ffed;
+            color: #389e0d;
+        }
+        .function-section {
+            padding: 0;
+            margin-bottom: 0;
+            background-color: #fafafa;
+            border-radius: 0;
+        }
+    </style>
+    {% block extra_css %}
+    <style>
+    </style>
+    {% endblock %}
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar navbar-dark fixed-top p-0 shadow">
+        <div class="container-fluid">
+            <button class="navbar-toggler d-md-none" type="button" id="sidebarToggle">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="{% url 'vehicle_list' %}">
+                🚗 公司车辆管理系统
+            </a>
+            <div class="d-flex align-items-center">
+                <span class="text-white me-3 d-none d-sm-inline">{{ user.username }}</span>
+                <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 侧边导航栏 -->
+    <div class="container-fluid">
+        <div class="row">
+            <div id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-white sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="function-section">
+                        <h6 class="sidebar-heading main-functions">
+                            <span>车辆管理</span>
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link {% if active_page == 'vehicle_list' %}active{% endif %}" href="{% url 'vehicle_list' %}">
+                                    <i class="bi bi-truck"></i>
+                                    车辆列表
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    {% if user.is_staff or user.is_superuser %}
+                    <div class="function-section">
+                        <h6 class="sidebar-heading admin-functions">
+                            <span>管理功能</span>
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'user_management' %}active{% endif %}" href="{% url 'user_management' %}">
+                                    <i class="bi bi-person-lines-fill"></i> 用户管理
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'maintenance_list' %}active{% endif %}" href="{% url 'maintenance_list' %}">
+                                    <i class="bi bi-tools"></i> 维护记录
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    {% if is_admin %}
+                    <div class="function-section">
+                        <h6 class="sidebar-heading system-functions">
+                            <span>系统功能</span>
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link {% if active_page == 'admin_iframe' %}active{% endif %}" href="{% url 'admin_iframe' %}">
+                                    <i class="bi bi-gear-fill"></i>
+                                    系统管理
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if active_page == 'statistics' %}active{% endif %}" href="{% url 'statistics' %}">
+                                    <i class="bi bi-graph-up"></i>
+                                    数据统计
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if active_page == 'audit_logs' %}active{% endif %}" href="{% url 'audit_logs' %}">
+                                    <i class="bi bi-journal-text"></i>
+                                    审计日志
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- 主要内容区域 -->
+            <main class="main-content">
+                <div class="container-fluid">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 侧边栏切换脚本
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarMenu = document.getElementById('sidebarMenu');
+            
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    if (window.innerWidth < 768) {
+                        sidebarMenu.classList.toggle('show');
+                    }
+                });
+            }
+            
+            // 窗口大小变化时自动处理侧边栏
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 768) {
+                    sidebarMenu.classList.remove('show');
+                }
+            });
+            
+            // 点击导航链接时自动隐藏侧边栏
+            const navLinks = document.querySelectorAll('.sidebar .nav-link');
+            navLinks.forEach(function(link) {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth < 768) {
+                        sidebarMenu.classList.remove('show');
+                    }
+                });
+            });
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html> 

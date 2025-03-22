@@ -1,0 +1,626 @@
+{% extends 'base.html' %}
+
+{% block title %}用户管理 - 公司车辆管理系统{% endblock %}
+
+{% block extra_css %}
+.user-card {
+    transition: transform 0.3s;
+}
+.user-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+.stat-card {
+    padding: 1.5rem;
+    text-align: center;
+    color: white;
+    border-radius: 8px;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.3s;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+.stat-card.user-stat {
+    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+}
+.stat-card.admin-stat {
+    background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+}
+.stat-card.staff-stat {
+    background: linear-gradient(135deg, #13c2c2 0%, #08979c 100%);
+}
+.stat-card.driver-stat {
+    background: linear-gradient(135deg, #fa8c16 0%, #d46b08 100%);
+}
+.stat-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+.stat-number {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+    margin: 0.5rem 0;
+}
+.stat-label {
+    font-size: 1rem;
+    font-weight: 500;
+    opacity: 0.9;
+}
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 50rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.status-active {
+    background-color: #d9f7be;
+    color: #389e0d;
+}
+.status-inactive {
+    background-color: #ffccc7;
+    color: #cf1322;
+}
+.role-admin {
+    background-color: #ff4d4f;
+    color: white;
+}
+.role-staff {
+    background-color: #ffa940;
+    color: white;
+}
+.role-driver {
+    background-color: #36cfc9;
+    color: white;
+}
+.role-user {
+    background-color: #85a5ff;
+    color: white;
+}
+.modal-header {
+    background-color: #f0f7ff;
+}
+.tab-content {
+    padding: 1.5rem;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 0.25rem 0.25rem;
+}
+.function-section {
+    padding: 0;
+    margin-bottom: 0;
+    background-color: #fafafa;
+    border-radius: 0;
+}
+.section-title {
+    position: relative;
+    padding-left: 15px;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+.section-title::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    border-radius: 3px;
+}
+.section-title.user-section::before {
+    background-color: #1890ff;
+}
+.section-title.admin-section::before {
+    background-color: #52c41a;
+}
+.section-title.system-section::before {
+    background-color: #fa8c16;
+}
+@media (max-width: 767.98px) {
+    .card-body .row {
+        flex-direction: column;
+    }
+    .card-body .col-md-2, 
+    .card-body .col-md-3, 
+    .card-body .col-md-4 {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
+{% endblock %}
+
+{% block content %}
+<div class="function-section admin">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+        <h1 class="h2"><i class="bi bi-person-lines-fill"></i> 用户管理</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="input-group me-2">
+                <input type="text" class="form-control" placeholder="搜索用户..." id="userSearch">
+                <button class="btn btn-outline-secondary" type="button">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                <i class="bi bi-person-plus"></i> 添加用户
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 用户统计 -->
+<section class="mb-4">
+    <h2 class="section-title user-section">用户统计信息</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4">
+        <div class="col mb-4">
+            <div class="card stat-card user-stat">
+                <div class="stat-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-number">{{ total_users }}</div>
+                <div class="stat-label">总用户数</div>
+            </div>
+        </div>
+        <div class="col mb-4">
+            <div class="card stat-card admin-stat">
+                <div class="stat-icon">
+                    <i class="bi bi-person-check"></i>
+                </div>
+                <div class="stat-number">{{ admin_count }}</div>
+                <div class="stat-label">管理员</div>
+            </div>
+        </div>
+        <div class="col mb-4">
+            <div class="card stat-card staff-stat">
+                <div class="stat-icon">
+                    <i class="bi bi-person-badge"></i>
+                </div>
+                <div class="stat-number">{{ staff_count }}</div>
+                <div class="stat-label">员工</div>
+            </div>
+        </div>
+        <div class="col mb-4">
+            <div class="card stat-card driver-stat">
+                <div class="stat-icon">
+                    <i class="bi bi-person-lines-fill"></i>
+                </div>
+                <div class="stat-number">{{ driver_count }}</div>
+                <div class="stat-label">司机</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 最近注册用户 -->
+<section class="mb-4">
+    <h2 class="section-title admin-section">最近注册用户</h2>
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>用户名</th>
+                            <th>角色</th>
+                            <th>邮箱</th>
+                            <th>注册时间</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in recent_users %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>
+                                {% if user.is_superuser %}
+                                <span class="badge role-admin">超级管理员</span>
+                                {% elif user.role == 'admin' %}
+                                <span class="badge role-admin">管理员</span>
+                                {% elif user.is_staff %}
+                                <span class="badge role-staff">员工</span>
+                                {% elif user.role == 'driver' %}
+                                <span class="badge role-driver">司机</span>
+                                {% else %}
+                                <span class="badge role-user">用户</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.date_joined|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                {% if user.is_active %}
+                                <span class="status-badge status-active">活跃</span>
+                                {% else %}
+                                <span class="status-badge status-inactive">停用</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">暂无最近注册用户</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 用户列表 -->
+<section>
+    <h2 class="section-title system-section">用户列表</h2>
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="userTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true">全部用户</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab" aria-controls="admin" aria-selected="false">管理员</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="staff-tab" data-bs-toggle="tab" data-bs-target="#staff" type="button" role="tab" aria-controls="staff" aria-selected="false">员工</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="driver-tab" data-bs-toggle="tab" data-bs-target="#driver" type="button" role="tab" aria-controls="driver" aria-selected="false">司机</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="regular-tab" data-bs-toggle="tab" data-bs-target="#regular" type="button" role="tab" aria-controls="regular" aria-selected="false">普通用户</button>
+                </li>
+            </ul>
+        </div>
+        <div class="tab-content" id="userTabContent">
+            <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="allUsersTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>用户名</th>
+                                <th>角色</th>
+                                <th>部门</th>
+                                <th>邮箱</th>
+                                <th>手机</th>
+                                <th>注册时间</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td>{{ user.username }}</td>
+                                <td>
+                                    {% if user.is_superuser %}
+                                    <span class="badge role-admin">超级管理员</span>
+                                    {% elif user.role == 'admin' %}
+                                    <span class="badge role-admin">管理员</span>
+                                    {% elif user.is_staff %}
+                                    <span class="badge role-staff">员工</span>
+                                    {% elif user.role == 'driver' %}
+                                    <span class="badge role-driver">司机</span>
+                                    {% else %}
+                                    <span class="badge role-user">用户</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ user.department|default:"-" }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.phone|default:"-" }}</td>
+                                <td>{{ user.date_joined|date:"Y-m-d" }}</td>
+                                <td>
+                                    {% if user.is_active %}
+                                    <span class="status-badge status-active">活跃</span>
+                                    {% else %}
+                                    <span class="status-badge status-inactive">停用</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editUserModal{{ user.id }}">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal{{ user.id }}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center">暂无用户数据</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- 其他tab内容类似，只需过滤不同角色的用户 -->
+            <div class="tab-pane fade" id="admin" role="tabpanel" aria-labelledby="admin-tab">
+                <!-- 管理员列表 -->
+            </div>
+            <div class="tab-pane fade" id="staff" role="tabpanel" aria-labelledby="staff-tab">
+                <!-- 员工列表 -->
+            </div>
+            <div class="tab-pane fade" id="driver" role="tabpanel" aria-labelledby="driver-tab">
+                <!-- 司机列表 -->
+            </div>
+            <div class="tab-pane fade" id="regular" role="tabpanel" aria-labelledby="regular-tab">
+                <!-- 普通用户列表 -->
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 侧边栏切换脚本
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarMenu = document.getElementById('sidebarMenu');
+        
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function() {
+                if (window.innerWidth < 768) {
+                    sidebarMenu.classList.toggle('show');
+                }
+            });
+        }
+        
+        // 窗口大小变化时自动处理侧边栏
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768) {
+                sidebarMenu.classList.remove('show');
+            }
+        });
+        
+        // 点击导航链接时自动隐藏侧边栏
+        const navLinks = document.querySelectorAll('.sidebar .nav-link');
+        navLinks.forEach(function(link) {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 768) {
+                    sidebarMenu.classList.remove('show');
+                }
+            });
+        });
+        
+        // 用户搜索功能
+        document.getElementById('userSearch').addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const userTable = document.getElementById('allUsersTable');
+            const rows = userTable.getElementsByTagName('tr');
+            
+            for (let i = 1; i < rows.length; i++) {
+                let found = false;
+                const cells = rows[i].getElementsByTagName('td');
+                
+                for (let j = 0; j < cells.length; j++) {
+                    const cellText = cells[j].textContent.toLowerCase();
+                    if (cellText.indexOf(searchValue) > -1) {
+                        found = true;
+                        break;
+                    }
+                }
+                
+                rows[i].style.display = found ? '' : 'none';
+            }
+        });
+        
+        // 添加用户表单验证
+        const addUserForm = document.getElementById('addUserForm');
+        if (addUserForm) {
+            addUserForm.addEventListener('submit', function(event) {
+                const password = document.getElementById('password').value;
+                const passwordConfirm = document.getElementById('password_confirm').value;
+                
+                if (password !== passwordConfirm) {
+                    event.preventDefault();
+                    alert('两次输入的密码不一致，请重新输入');
+                    return false;
+                }
+                return true;
+            });
+        }
+        
+        // 编辑用户表单处理
+        document.querySelectorAll('form[id^="editUserForm"]').forEach(function(form) {
+            form.addEventListener('submit', function(event) {
+                console.log('编辑用户表单提交');
+                return true;
+            });
+        });
+        
+        // 删除用户表单处理
+        document.querySelectorAll('form[id^="deleteUserForm"]').forEach(function(form) {
+            form.addEventListener('submit', function(event) {
+                console.log('删除用户表单提交');
+                return true;
+            });
+        });
+        
+        // 重置表单当模态框关闭时
+        const addUserModal = document.getElementById('addUserModal');
+        if (addUserModal) {
+            addUserModal.addEventListener('hidden.bs.modal', function() {
+                addUserForm.reset();
+            });
+        }
+    });
+</script>
+{% endblock %}
+
+{% block modals %}
+<!-- 添加用户模态框 -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="addUserForm" method="post" action="{% url 'user_management' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addUserModalLabel"><i class="bi bi-person-plus"></i> 添加新用户</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 创建用户后，新用户可以通过用户名和密码登录系统。
+                    </div>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">用户名 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                        <div class="form-text">用户名将用于登录系统，创建后不可更改</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">邮箱 <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">密码 <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="password" name="password" required minlength="8">
+                        <div class="form-text">密码长度至少8位</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password_confirm" class="form-label">确认密码 <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="password_confirm" name="password_confirm" required minlength="8">
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">角色 <span class="text-danger">*</span></label>
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="" selected disabled>请选择角色</option>
+                            <option value="user">普通用户</option>
+                            <option value="driver">司机</option>
+                            <option value="staff">员工</option>
+                            {% if user.is_superuser %}
+                            <option value="admin">管理员</option>
+                            {% endif %}
+                        </select>
+                        <div class="form-text">
+                            <ul class="mb-0">
+                                <li>普通用户：只能查看车辆列表</li>
+                                <li>司机：可以接受车辆分配任务</li>
+                                <li>员工：可以创建普通用户和管理车辆信息</li>
+                                <li>管理员：拥有系统管理权限(仅超级管理员可创建)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="department" class="form-label">部门</label>
+                        <input type="text" class="form-control" id="department" name="department">
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">手机号码</label>
+                        <input type="text" class="form-control" id="phone" name="phone" pattern="[0-9]{11}">
+                        <div class="form-text">请输入11位手机号码</div>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_active" name="is_active" checked>
+                        <label class="form-check-label" for="is_active">账户激活</label>
+                        <div class="form-text">如不勾选，用户将无法登录系统</div>
+                    </div>
+                    <input type="hidden" name="action" value="add_user">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">添加用户</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑用户模态框 - 为每个用户创建一个 -->
+{% for user in users %}
+<div class="modal fade" id="editUserModal{{ user.id }}" tabindex="-1" aria-labelledby="editUserModalLabel{{ user.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editUserForm{{ user.id }}" method="post" action="{% url 'user_management' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUserModalLabel{{ user.id }}"><i class="bi bi-pencil"></i> 编辑用户：{{ user.username }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">用户名</label>
+                        <input type="text" class="form-control" value="{{ user.username }}" readonly>
+                        <div class="form-text">用户名不可更改</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_email{{ user.id }}" class="form-label">邮箱 <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="edit_email{{ user.id }}" name="email" value="{{ user.email }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_role{{ user.id }}" class="form-label">角色 <span class="text-danger">*</span></label>
+                        <select class="form-select" id="edit_role{{ user.id }}" name="role" required>
+                            <option value="user" {% if not user.is_staff and not user.is_superuser and user.role == 'user' %}selected{% endif %}>普通用户</option>
+                            <option value="driver" {% if user.role == 'driver' %}selected{% endif %}>司机</option>
+                            <option value="staff" {% if user.is_staff and not user.is_superuser and user.role != 'admin' %}selected{% endif %}>员工</option>
+                            {% if request.user.is_superuser %}
+                            <option value="admin" {% if user.role == 'admin' or user.is_superuser %}selected{% endif %}>管理员</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_department{{ user.id }}" class="form-label">部门</label>
+                        <input type="text" class="form-control" id="edit_department{{ user.id }}" name="department" value="{{ user.department|default:'' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_phone{{ user.id }}" class="form-label">手机号码</label>
+                        <input type="text" class="form-control" id="edit_phone{{ user.id }}" name="phone" value="{{ user.phone|default:'' }}" pattern="[0-9]{11}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_password{{ user.id }}" class="form-label">新密码</label>
+                        <input type="password" class="form-control" id="edit_password{{ user.id }}" name="password" minlength="8">
+                        <div class="form-text">如需更改密码，请在此处输入新密码，否则留空</div>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="edit_is_active{{ user.id }}" name="is_active" {% if user.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="edit_is_active{{ user.id }}">账户激活</label>
+                    </div>
+                    <input type="hidden" name="action" value="edit_user">
+                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">保存修改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 删除用户确认模态框 - 为每个用户创建一个 -->
+<div class="modal fade" id="deleteUserModal{{ user.id }}" tabindex="-1" aria-labelledby="deleteUserModalLabel{{ user.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="deleteUserForm{{ user.id }}" method="post" action="{% url 'user_management' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteUserModalLabel{{ user.id }}"><i class="bi bi-exclamation-triangle text-danger"></i> 删除用户确认</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <p>您确定要删除用户 <strong>{{ user.username }}</strong> 吗？</p>
+                        <p>此操作不可逆，用户将被永久删除。</p>
+                    </div>
+                    <input type="hidden" name="action" value="delete_user">
+                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-danger">确认删除</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %} 

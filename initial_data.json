@@ -1,0 +1,82 @@
+[
+  {
+    "model": "vehicle.vehicletype",
+    "pk": 1,
+    "fields": {
+      "name": "轿车",
+      "description": "5座以下小型轿车",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "vehicle.vehicletype",
+    "pk": 2,
+    "fields": {
+      "name": "SUV",
+      "description": "运动型多用途车",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "vehicle.vehicletype",
+    "pk": 3,
+    "fields": {
+      "name": "商务车",
+      "description": "7座以上商务用途车辆",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "vehicle.vehicletype",
+    "pk": 4,
+    "fields": {
+      "name": "货车",
+      "description": "运送货物的车辆",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "maintenance.maintenancetype",
+    "pk": 1,
+    "fields": {
+      "name": "定期保养",
+      "description": "按里程或时间进行的常规保养",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "maintenance.maintenancetype",
+    "pk": 2,
+    "fields": {
+      "name": "故障维修",
+      "description": "车辆故障的维修处理",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "maintenance.maintenancetype",
+    "pk": 3,
+    "fields": {
+      "name": "年检准备",
+      "description": "车辆年检前的检查与维护",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "maintenance.maintenancetype",
+    "pk": 4,
+    "fields": {
+      "name": "事故维修",
+      "description": "车辆事故后的维修",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  }
+] 
